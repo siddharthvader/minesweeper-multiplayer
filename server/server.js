@@ -102,10 +102,11 @@ function revealAdjacentCells(game, row, col, playerId) {
           cell.revealed = true;
           cell.revealedBy = playerId;
           // Update player score for each revealed cell
-          const player = game.players.find(p => p.id === playerId);
-          if (player) {
-            player.score += 1;
-          }
+          //   stop scoring for this right now
+          //   const player = game.players.find(p => p.id === playerId);
+          //   if (player) {
+          //     player.score += 1;
+          //   }
           if (cell.value === 0) {
             revealAdjacentCells(game, newRow, newCol, playerId);
           }
