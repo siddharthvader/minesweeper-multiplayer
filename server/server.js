@@ -163,7 +163,7 @@ app.post('/create-game', (req, res) => {
     const gameId = uuidv4();
     const game = {
       id: gameId,
-      grid: createGrid(10, 10, 10),
+      grid: createGrid(16, 30, 99),
       players: [],
       gameTime: 0,
       gameOver: false,

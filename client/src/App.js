@@ -52,6 +52,7 @@ const Minesweeper = () => {
   const [gameTime, setGameTime] = useState(0);
   const [isCreatingGame, setIsCreatingGame] = useState(false);
   const [playerColors, setPlayerColors] = useState({});
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     // Check for gameId in URL
@@ -72,11 +73,18 @@ const Minesweeper = () => {
       setPlayerColors(colorMap);
     });
 
+
     socket.on('playerJoined', (newPlayer) => {
-      setGameState(prevState => ({
-        ...prevState,
-        players: [...prevState.players, newPlayer]
-      }));
+      setGameState(prevState => {
+        // Check if the player already exists
+        if (prevState.players.some(player => player.id === newPlayer.id)) {
+          return prevState; // Don't add if the player already exists
+        }
+        return {
+          ...prevState,
+          players: [...prevState.players, newPlayer]
+        };
+      });
     });
 
     socket.on('playerLeft', (playerId) => {
@@ -145,10 +153,61 @@ const Minesweeper = () => {
     socket.emit('revealCell', { gameId, row, col });
   };
 
+  const handleChord = useCallback((row, col) => {
+    const cell = gameState.grid[row][col];
+    if (!cell.revealed || cell.value === 0) return;
+
+    const adjacentFlags = countAdjacentFlags(row, col);
+    if (adjacentFlags === cell.value) {
+      const adjacentCells = getAdjacentCells(row, col);
+      adjacentCells.forEach(([r, c]) => {
+        if (!gameState.grid[r][c].flagged && !gameState.grid[r][c].revealed) {
+          socket.emit('revealCell', { gameId, row: r, col: c });
+        }
+      });
+    }
+  }, [gameState, gameId]);
+
+  const countAdjacentFlags = (row, col) => {
+    let count = 0;
+    for (let r = row - 1; r <= row + 1; r++) {
+      for (let c = col - 1; c <= col + 1; c++) {
+        if (r >= 0 && r < gameState.grid.length && c >= 0 && c < gameState.grid[0].length) {
+          if (gameState.grid[r][c].flagged) count++;
+        }
+      }
+    }
+    return count;
+  };
+
+  const getAdjacentCells = (row, col) => {
+    const adjacent = [];
+    for (let r = row - 1; r <= row + 1; r++) {
+      for (let c = col - 1; c <= col + 1; c++) {
+        if (r >= 0 && r < gameState.grid.length && c >= 0 && c < gameState.grid[0].length) {
+          if (r !== row || c !== col) {
+            adjacent.push([r, c]);
+          }
+        }
+      }
+    }
+    return adjacent;
+  };
+
   const handleCellRightClick = (e, row, col) => {
     e.preventDefault();
-    socket.emit('toggleFlag', { gameId, row, col });
+    if (gameState.grid[row][col].revealed) {
+      handleChord(row, col);
+    } else {
+      socket.emit('toggleFlag', { gameId, row, col });
+    }
   };
+
+  const copyLinkToClipboard = useCallback(() => {
+    navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, []);
 
   if (!gameState) {
     return (
@@ -182,7 +241,8 @@ const Minesweeper = () => {
 
   return (
     <div className="flex flex-col items-center space-y-4 p-4">
-      <h1 className="text-2xl font-bold">Multiplayer Minesweeper</h1>
+      <h1 className="text-2xl font-bold">Bomb Squad 💣</h1>
+      <h2 className="text-lg text-gray-600">Sweep mines with your friends!</h2>
       <div className="flex space-x-4">
         {gameState.players.map((player) => (
           <PlayerScore key={player.id} player={player} />
@@ -211,10 +271,25 @@ const Minesweeper = () => {
       {gameState.gameOver && <div className="text-xl font-bold text-red-500">Game Over!</div>}
       {gameState.win && <div className="text-xl font-bold text-green-500">You Win!</div>}
       {(gameState.gameOver || gameState.win) && (
-        <Button onClick={createGame} className="mt-4">
+        <Button onClick={createGame} className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300 ease-in-out transform hover:scale-105">
           Create New Game
-        </Button>
+        </Button>        
       )}
+      <Button 
+        onClick={copyLinkToClipboard}
+        className="mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300 ease-in-out transform hover:scale-105 flex items-center"
+      >
+        {copied ? (
+          <>
+            <span>Link Copied</span>
+            <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </>
+        ) : (
+          'Copy Link'
+        )}
+      </Button>
     </div>
   );
 };
