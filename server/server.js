@@ -173,6 +173,18 @@ app.post('/create-game', (req, res) => {
     res.json({ gameId });
   });
 
+  app.post('/update-game/:id', (req, res) => {
+    // console.log('update-game', req.params.id);
+    const gameId = req.params.id;
+    const game = games.get(gameId);
+    game.grid = createGrid(16, 30, 99);
+    game.gameTime = 0;
+    game.win = false;
+    game.gameOver = false;
+    games.set(gameId, game);
+    res.json({ gameId });
+  });
+
   app.get('/games', (req, res) => {
     const gamesList = Array.from(games.values()).map(game => ({
       id: game.id,
@@ -194,7 +206,7 @@ app.post('/create-game', (req, res) => {
   });
 
 io.on('connection', (socket) => {
-  console.log('New client connected');
+//   console.log('New client connected');
 
   socket.on('joinGame', ({ gameId, playerName }) => {
     let game = games.get(gameId);
@@ -219,7 +231,6 @@ io.on('connection', (socket) => {
     };
 
     game.players.push(newPlayer);
-    console.log(game.players)
 
     socket.join(gameId);
     io.to(gameId).emit('gameState', sanitizeGameState(game));
@@ -257,7 +268,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected');
+    // console.log('Client disconnected');
     // Find and remove the player from their game
     for (let [gameId, game] of games) {
       const playerIndex = game.players.findIndex(p => p.id === socket.id);
@@ -275,6 +286,12 @@ io.on('connection', (socket) => {
         break;
       }
     }
+  });
+
+  socket.on('updateBoard', ({ gameId, gameData }) => {
+    // Update the game state in your server-side storage if necessary
+    // Then broadcast the update to all clients in the game room
+    io.to(gameId).emit('gameState', gameData);
   });
 });
 

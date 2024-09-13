@@ -109,25 +109,48 @@ const Minesweeper = () => {
   const createGame = useCallback(async () => {
     try {
       setIsCreatingGame(true);
-      const createResponse = await fetch('http://localhost:3001/create-game', { method: 'POST' });
-      const createData = await createResponse.json();
-      const newGameId = createData.gameId;
+      let newGameId;
+      let endpoint;
+      let method;
+      let newGame;
+
+      if (gameId) {
+        // Use update-game endpoint if gameId exists
+        endpoint = `http://localhost:3001/update-game/${gameId}`;
+        method = 'POST';
+        newGameId = gameId;
+        newGame = false;
+      } else {
+        // Use create-game endpoint if no gameId
+        endpoint = 'http://localhost:3001/create-game';
+        method = 'POST';
+        newGame = true;
+      }
+
+      const response = await fetch(endpoint, { method });
+      const data = await response.json();
+      newGameId = newGameId || data.gameId;
       
       setGameId(newGameId);
       window.history.pushState({}, '', `?gameId=${newGameId}`);
-      
-      const randomPlayerName = `Player ${Math.floor(Math.random() * 1000)}`;
+
+      const randomPlayerName = playerName || `Player ${Math.floor(Math.random() * 1000)}`;
       setPlayerName(randomPlayerName);
       
       const fetchResponse = await fetch(`http://localhost:3001/game/${newGameId}`);
       if (fetchResponse.ok) {
         const gameData = await fetchResponse.json();
-        joinGame(newGameId, randomPlayerName);
+        if (newGame) {
+          joinGame(newGameId, randomPlayerName);
+        } else {
+          // Emit a socket event to update the board for all players
+          socket.emit('updateBoard', { gameId: newGameId, gameData });
+        }
         setGameState(gameData);
         setGameTime(gameData.gameTime);
-        toast.success('Game created successfully!');
+        toast.success(newGame ? 'Game created successfully!' : 'Game updated successfully!');
       } else {
-        throw new Error('Failed to fetch the newly created game');
+        throw new Error('Failed to fetch the game data');
       }
     } catch (error) {
       console.error('Error in createGame function:', error);
@@ -135,7 +158,7 @@ const Minesweeper = () => {
     } finally {
       setIsCreatingGame(false);
     }
-  }, []);
+  }, [gameId, playerName]);
 
   const joinGame = useCallback((gameIdToJoin, playerNameToJoin) => {
     const idToUse = gameId || gameIdToJoin;
@@ -214,15 +237,25 @@ const Minesweeper = () => {
       <div className="flex flex-col items-center space-y-4 p-4">
         <h1 className="text-2xl font-bold">Minesweeper</h1>
         {!gameId ? (
-          <Button 
-            onClick={() => {
-              console.log('Create Game button clicked');
-              createGame();
-            }} 
-            disabled={isCreatingGame}
-          >
-            {isCreatingGame ? 'Creating Game...' : 'Create New Game'}
-          </Button>
+          <>
+            <Input
+              type="text"
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              placeholder="Enter your name"
+              className="w-64 mb-2"
+            />
+            <Button 
+              onClick={() => {
+                console.log('Create Game button clicked');
+                createGame();
+              }} 
+              disabled={isCreatingGame}
+              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300 ease-in-out transform hover:scale-105"
+            >
+              {isCreatingGame ? 'Creating Game...' : 'Create New Game'}            
+            </Button>
+          </>
         ) : (
           <>
             <Input
@@ -232,7 +265,7 @@ const Minesweeper = () => {
               placeholder="Enter your name"
               className="w-64 mb-2"
             />
-            <Button onClick={joinGame}>Join Game</Button>
+            <Button onClick={joinGame} className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300 ease-in-out transform hover:scale-105">Join Game</Button>
           </>
         )}
       </div>
@@ -271,7 +304,7 @@ const Minesweeper = () => {
       {gameState.gameOver && <div className="text-xl font-bold text-red-500">Game Over!</div>}
       {gameState.win && <div className="text-xl font-bold text-green-500">You Win!</div>}
       {(gameState.gameOver || gameState.win) && (
-        <Button onClick={createGame} className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+        <Button onClick={() => createGame(gameId)} className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300 ease-in-out transform hover:scale-105">
           Create New Game
         </Button>        
       )}
