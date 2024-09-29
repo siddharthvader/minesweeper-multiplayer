@@ -5,7 +5,8 @@ import { Input } from './components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { toast } from 'react-hot-toast';
 
-const socket = io('http://localhost:3001');
+const BACKEND_URL = 'http://localhost:3001'
+const socket = io(BACKEND_URL);
 
 const Cell = ({ value, revealed, flagged, onClick, onContextMenu, revealedBy, flaggedBy, playerColors }) => {
   const borderStyle = revealedBy ? { borderColor: playerColors[revealedBy], borderWidth: '2px' } 
@@ -116,13 +117,13 @@ const Minesweeper = () => {
 
       if (gameId) {
         // Use update-game endpoint if gameId exists
-        endpoint = '/update-game/${gameId}';
+        endpoint = BACKEND_URL + `/update-game/${gameId}`;
         method = 'POST';
         newGameId = gameId;
         newGame = false;
       } else {
         // Use create-game endpoint if no gameId
-        endpoint = '/create-game';
+        endpoint = BACKEND_URL + '/create-game';
         method = 'POST';
         newGame = true;
       }
@@ -132,12 +133,12 @@ const Minesweeper = () => {
       newGameId = newGameId || data.gameId;
       
       setGameId(newGameId);
-      window.history.pushState({}, '', '?gameId=${newGameId}');
+      window.history.pushState({}, '', `?gameId=${newGameId}`);
 
       const randomPlayerName = playerName || 'Player ${Math.floor(Math.random() * 1000)}';
       setPlayerName(randomPlayerName);
       
-      const fetchResponse = await fetch('/game/${newGameId}');
+      const fetchResponse = await fetch(BACKEND_URL + `/game/${newGameId}`);
       if (fetchResponse.ok) {
         const gameData = await fetchResponse.json();
         if (newGame) {
