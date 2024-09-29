@@ -4,6 +4,10 @@ import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 import { toast } from 'react-hot-toast';
+import ReactGA from 'react-ga';
+
+ReactGA.initialize('G-YGZ1FP9FT1');
+ReactGA.pageview(window.location.pathname + window.location.search);
 
 const BACKEND_URL = 'http://localhost:3001'
 const socket = io(BACKEND_URL);

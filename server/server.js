@@ -6,14 +6,15 @@ const { v4: uuidv4 } = require('uuid');
 const app = express();
 const cors = require('cors');
 const server = http.createServer(app);
+const FRONTEND_URL = 'http://localhost:3000';
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: FRONTEND_URL,
     methods: ["GET", "POST"]
   }
 });
 app.use(cors({
-    origin: 'http://localhost:3000' // Allow only your frontend origin
+    origin: FRONTEND_URL
   }));
 
 // In-memory storage for games
