@@ -10,7 +10,11 @@ ReactGA.initialize('G-YGZ1FP9FT1');
 ReactGA.pageview(window.location.pathname + window.location.search);
 
 const BACKEND_URL = 'http://localhost:3001'
-const socket = io(BACKEND_URL);
+// const socket = io(BACKEND_URL);
+const socket = io(BACKEND_URL, {
+  path: '/socket.io',
+  transports: ['websocket']
+});
 
 const Cell = ({ value, revealed, flagged, onClick, onContextMenu, revealedBy, flaggedBy, playerColors }) => {
   const borderStyle = revealedBy ? { borderColor: playerColors[revealedBy], borderWidth: '2px' } 

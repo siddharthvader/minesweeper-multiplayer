@@ -8,6 +8,7 @@ const cors = require('cors');
 const server = http.createServer(app);
 const FRONTEND_URL = 'http://localhost:3000';
 const io = socketIo(server, {
+  path: '/socket.io',    
   cors: {
     origin: FRONTEND_URL,
     methods: ["GET", "POST"]
