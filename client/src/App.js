@@ -116,13 +116,13 @@ const Minesweeper = () => {
 
       if (gameId) {
         // Use update-game endpoint if gameId exists
-        endpoint = `http://localhost:3001/update-game/${gameId}`;
+        endpoint = '/update-game/${gameId}';
         method = 'POST';
         newGameId = gameId;
         newGame = false;
       } else {
         // Use create-game endpoint if no gameId
-        endpoint = 'http://localhost:3001/create-game';
+        endpoint = '/create-game';
         method = 'POST';
         newGame = true;
       }
@@ -132,12 +132,12 @@ const Minesweeper = () => {
       newGameId = newGameId || data.gameId;
       
       setGameId(newGameId);
-      window.history.pushState({}, '', `?gameId=${newGameId}`);
+      window.history.pushState({}, '', '?gameId=${newGameId}');
 
-      const randomPlayerName = playerName || `Player ${Math.floor(Math.random() * 1000)}`;
+      const randomPlayerName = playerName || 'Player ${Math.floor(Math.random() * 1000)}';
       setPlayerName(randomPlayerName);
       
-      const fetchResponse = await fetch(`http://localhost:3001/game/${newGameId}`);
+      const fetchResponse = await fetch('/game/${newGameId}');
       if (fetchResponse.ok) {
         const gameData = await fetchResponse.json();
         if (newGame) {
@@ -235,7 +235,7 @@ const Minesweeper = () => {
   if (!gameState) {
     return (
       <div className="flex flex-col items-center space-y-4 p-4">
-        <h1 className="text-2xl font-bold">Minesweeper</h1>
+        <h1 className="text-2xl font-bold">Bomb Squad 💣</h1>
         {!gameId ? (
           <>
             <Input
