@@ -10,8 +10,7 @@ ReactGA.initialize('G-YGZ1FP9FT1');
 ReactGA.pageview(window.location.pathname + window.location.search);
 
 const BACKEND_URL = 'http://localhost:3001'
-// const socket = io(BACKEND_URL);
-const socket = io(BACKEND_URL, {
+const socket = io({
   path: '/socket.io',
   transports: ['websocket']
 });
@@ -245,6 +244,7 @@ const Minesweeper = () => {
     return (
       <div className="flex flex-col items-center space-y-4 p-4">
         <h1 className="text-2xl font-bold">Bomb Squad 💣</h1>
+        <h2 className="text-lg text-gray-600">Sweep mines with your friends!</h2>
         {!gameId ? (
           <>
             <Input
